@@ -1,16 +1,8 @@
 {
-  "name": "mutlu-tv-proxy",
+  "name": "mutluv-vercel-proxy",
   "version": "1.0.0",
-  "main": "api/index.js",
-  "scripts": {
-    "start": "node api/index.js"
-  },
   "dependencies": {
-    "express": "^4.19.2",
     "node-fetch": "^2.7.0",
     "sharp": "^0.33.5"
-  },
-  "engines": {
-    "node": "18.x"
   }
 }
