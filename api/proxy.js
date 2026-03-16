@@ -1,247 +1,226 @@
-const express = require('express');
-const fetch = require('node-fetch').default;
+// api/proxy.js (Vercel Serverless Function)
 
-const app = express();
+// Logo URL'leri (yedekli sistem)
+const LOGO_URLS = [
+  'https://i.hizliresim.com/dpftjq3.jpg',
+  'https://picsum.photos/140/80', // Yedek logo (silinebilir)
+  // Kendi logo URL'lerini buraya ekle
+];
 
-const channels = {
-  bein1:    "https://dga1op10s1u3leo.450bb93555fef8.click/live/selcukobs1/playlist.m3u8",
-  bein2:    "https://zeustv432423.info/b2/tracks-v1a1/mono.ts.m3u8", 
-  bein3:    "https://zeustv432423.info/b3/tracks-v1a1/mono.ts.m3u8",
-  bein4:    "https://zeustv432423.info/b4/tracks-v1a1/mono.ts.m3u8",
-  bein01:   "https://zeustv432423.info/b1/tracks-v1a1/mono.ts.m3u8",
-  atv:      "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/atv/atv_1080p.m3u8",
-  star:     "http://dygvideo.dygdigital.com/live/hls/stardai?m3u8",
-  now:      "http://116.202.238.88/FOXTV_TR/index.m3u8",
-  trt1:     "https://streams.uzunmuhalefet.com/stream/535f4f5a-3ffa-4919-bb5d-5d31024c9237.m3u8",
-  kanalD:   "https://demiroren.daioncdn.net/kanald/kanald.m3u8?app=kanald_web",
-  show:     "https://ciner.daioncdn.net/showtv/showtv_1080p.m3u8?app=showtv_web",
-  tv8:      "https://rkhubpaomb.turknet.ercdn.net/fwjkgpasof/tv8/tv8.m3u8",
-  minikago: "https://rnttwmjcin.turknet.ercdn.net/lcpmvefbyo/minikago/minikago_720p.m3u8",
-  minikacocuk: "https://streams.uzunmuhalefet.com/stream/507ebfe3-0c78-4804-b3be-637e9b45f5a0.m3u8",
-  cartoon:  "https://streams.uzunmuhalefet.com/stream/9d940976-31c8-4570-92e6-a684e49bea46.m3u8"
-};
+// M3U8 kaynak URL
+const SOURCE_URL = 'https://dga1op10s1u3leo.450bb93555fef8.click/live/selcukobs1/playlist.m3u8';
 
-app.get('/', (req, res) => {
-  const host = req.get('host');
-  const protocol = req.protocol;
-  const playlistUrl = `${protocol}://${host}/playlist.m3u8`;
-  const count = Object.keys(channels).length;
-
-  res.send(`
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>MutluTV Proxy  - Canl TV Keyfi</title>
-  <style>
-    :root { --neon: #ff00aa; --dark: #0a0015; --bg: linear-gradient(135deg, #0a0015, #1a0033, #2a004d); }
-    * { margin:0; padding:0; box-sizing:border-box; }
-    body { font-family: 'Segoe UI', sans-serif; background: var(--bg); color: #eee; min-height:100vh; display:flex; flex-direction:column; }
-    header { background: rgba(0,0,0,0.8); padding: 2rem 1rem; text-align:center; border-bottom: 2px solid var(--neon); box-shadow: 0 0 30px rgba(255,0,170,0.3); }
-    h1 { font-size: 3.5rem; color: var(--neon); text-shadow: 0 0 20px var(--neon), 0 0 40px #000; letter-spacing: 2px; animation: glitch 4s infinite; }
-    @keyframes glitch { 0%,100% { text-shadow: 0 0 10px var(--neon); } 2% { transform: translate(-2px,2px); } 4% { transform: translate(2px,-2px); } }
-    .container { flex:1; padding: 3rem 1rem; text-align:center; max-width: 1000px; margin: auto; }
-    .btn { background: var(--neon); color: white; padding: 1.5rem 4rem; font-size: 1.8rem; border: none; border-radius: 999px; text-decoration:none; display:inline-block; margin: 2.5rem 0; cursor:pointer; box-shadow: 0 0 40px rgba(255,0,170,0.6); transition: all .4s; }
-    .btn:hover { transform: scale(1.08); box-shadow: 0 0 80px rgba(255,0,170,0.9); }
-    .info { background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); padding: 2rem; border-radius: 20px; margin: 3rem 0; font-size: 1.3rem; border: 1px solid rgba(255,0,170,0.2); }
-    footer { background: rgba(0,0,0,0.9); padding: 2rem; text-align:center; font-size: 1.1rem; border-top: 1px solid var(--neon); }
-    footer a { color: var(--neon); margin: 0 1.5rem; text-decoration:none; }
-    footer a:hover { text-shadow: 0 0 10px var(--neon); }
-    @media (max-width: 600px) { h1 {font-size:2.5rem;} .btn {font-size:1.4rem; padding:1.2rem 3rem;} .info {font-size:1.1rem;} }
-  </style>
-</head>
-<body>
-  <header><h1>MUTLUTV PROXY </h1></header>
-  <div class="container">
-    <h2 style="font-size:2.2rem; margin-bottom:1.5rem;">${count} KANAL CANLI PATLIYOR</h2>
-    <div class="info">
-      BeIN'den Minika'ya, Cartoon'dan Show'a kadar her bok burada.<br>
-      Reklamsz, bedava, sadece zevk i�in toplanm yaynlar.<br>
-      IPTV'n a�, linki at, keyfine bak.
-    </div>
-    <a href="${playlistUrl}" class="btn">T�M KANALLARI A�</a>
-    <p style="margin-top:3rem; opacity:0.8; font-size:1.2rem;">
-      VLC, GSE Smart IPTV, IPTV Smarters veya Tivimate'e bu playlist linkini yaptr.<br>
-      Bazlar direkt a�lr, bazlar i�in user-agent deitir.
-    </p>
-  </div>
-  <footer>
-    <p>� 2025 MutluTV Proxy - Sikeyim telif iini</p>
-    <div>
-      <a href="#">Gizlilik Politikas</a> � 
-      <a href="#">Hakkmzda</a> � 
-      <a href="mailto:mutlutvproxy@proton.me">Bize Ula</a>
-    </div>
-  </footer>
-</body>
-</html>
-  `);
-});
-
-app.get('/playlist.m3u8', (req, res) => {
-  const ids = Object.keys(channels);
-  let m3u = `#EXTM3U\n#PLAYLIST: MutluTV - ${ids.length} kanal\n`;
-
-  ids.forEach(id => {
-    const name = id.toUpperCase().replace(/(\d+)$/, ' $1');
-    m3u += `#EXTINF:-1 tvg-id="${id}" tvg-name="${name}" group-title="TV",${name}\n`;
-    m3u += `${req.protocol}://${req.get('host')}/${id}/playlist.m3u8\n`;
-  });
-
-  res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Cache-Control', 'no-cache');
-  res.send(m3u);
-});
-
-app.options('*', (req, res) => {
+// Ana handler
+export default async function handler(req, res) {
+  // CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
-  res.status(204).end();
-});
+  
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
 
-app.get('/:channelId/playlist.m3u8', async (req, res) => {
-  const { channelId } = req.params;
-  const target = channels[channelId];
-
-  if (!target) return res.status(404).send(`Kanal ${channelId} yok amk`);
+  const url = new URL(req.url, `http://${req.headers.host}`);
+  const path = url.pathname;
 
   try {
-    console.log(`Fetching: ${target}`);
-    
-    const response = await fetch(target, {
-      headers: { 
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'Accept': '*/*',
-        'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Referer': 'https://www.turknet.ercdn.net/',
-        'Origin': 'https://www.turknet.ercdn.net',
-        'Connection': 'keep-alive'
-      },
-      redirect: 'follow'
-    });
+    // M3U8 playlist isteği
+    if (path === '/' || path === '/playlist.m3u8' || path.endsWith('.m3u8')) {
+      return await handlePlaylist(req, res, path);
+    }
 
+    // Segment isteği (.jpg)
+    if (path.startsWith('/seg/') && path.endsWith('.jpg')) {
+      return await handleSegment(req, res, path);
+    }
+
+    // Logo test endpoint
+    if (path === '/test-logo') {
+      return await testLogo(req, res);
+    }
+
+    // 404
+    res.status(404).json({ error: 'Not found' });
+  } catch (error) {
+    console.error('Hata:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+}
+
+// M3U8 playlist handler
+async function handlePlaylist(req, res, path) {
+  try {
+    const response = await fetch(SOURCE_URL);
+    
     if (!response.ok) {
-      console.log(`Response not OK: ${response.status}`);
-      return res.status(502).send(`Yayn patlad: ${response.status}`);
+      throw new Error(`Kaynak yanıt vermiyor: ${response.status}`);
     }
 
     let body = await response.text();
-    console.log(`Body length: ${body.length}`);
 
-    // �ZEL D�ZELTME: Turknet CDN i�in segment yollarn d�zelt
-    const baseUrl = new URL(target);
-    const basePath = target.substring(0, target.lastIndexOf('/') + 1);
-    
-    // Farkl segment formatlarn yakala
+    // JPG yollarını düzelt
     body = body.replace(
-      /([^"\n\r\s]+\.(?:ts|m3u8|m4s|key|vtt))/gi,
-      (match) => {
-        // Eer zaten full URL ise dokunma
-        if (match.startsWith('http://') || match.startsWith('https://')) {
-          return match;
-        }
-        
-        // Eer relative path ise proxyle
-        const cleanMatch = match.startsWith('/') ? match.substring(1) : match;
-        console.log(`Replacing segment: ${match} -> ${req.protocol}://${req.get('host')}/${channelId}/seg/${cleanMatch}`);
-        return `${req.protocol}://${req.get('host')}/${channelId}/seg/${cleanMatch}`;
+      /https?:\/\/[^/\s]+\/live\/selcukobs1\/([^ \n]+\.jpg)/g,
+      (match, filename) => {
+        return `${req.headers.host.startsWith('localhost') ? 'http' : 'https'}://${req.headers.host}/seg/${filename}`;
       }
     );
 
-    res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.send(body);
-  } catch (err) {
-    console.error('m3u8 hatas:', err);
-    res.status(500).send('m3u8 hatas: ' + err.message);
-  }
-});
-
-app.get('/:channelId/seg/*', async (req, res) => {
-  const channelId = req.params.channelId;
-  const filename = req.params[0];
-  const base = channels[channelId];
-
-  if (!base) return res.status(404).send('Kanal yok amk');
-
-  // Base URL'i al
-  const baseUrl = base.substring(0, base.lastIndexOf('/') + 1);
-  
-  // Segment URL'ini olutur
-  let originalUrl;
-  if (filename.startsWith('http://') || filename.startsWith('https://')) {
-    originalUrl = filename;
-  } else if (filename.startsWith('/')) {
-    // Absolute path ise domain ekle
-    const urlParts = new URL(base);
-    originalUrl = `${urlParts.protocol}//${urlParts.host}${filename}`;
-  } else {
-    // Relative path ise base ile birletir
-    originalUrl = baseUrl + filename;
-  }
-
-  console.log(`Fetching segment: ${originalUrl}`);
-
-  try {
-    const segRes = await fetch(originalUrl, {
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
-        'Accept': '*/*',
-        'Accept-Language': 'tr-TR,tr;q=0.9,en-US;q=0.8,en;q=0.7',
-        'Referer': baseUrl,
-        'Origin': new URL(baseUrl).origin,
-        'Connection': 'keep-alive',
-        'Sec-Fetch-Dest': 'empty',
-        'Sec-Fetch-Mode': 'cors',
-        'Sec-Fetch-Site': 'same-site'
-      },
-      redirect: 'follow'
+    // Ek güvenlik: Tüm .jpg yollarını kontrol et
+    body = body.replace(/([^\/\s]+\.jpg)/g, (match) => {
+      if (match.includes('http')) return match;
+      return `/seg/${match}`;
     });
 
-    if (!segRes.ok) {
-      console.log(`Segment error: ${segRes.status} - ${originalUrl}`);
-      return res.status(segRes.status).send(`Segment �ld�: ${segRes.status}`);
-    }
-
-    const buffer = Buffer.from(await segRes.arrayBuffer());
-    const contentType = segRes.headers.get('content-type') || 
-                       (originalUrl.endsWith('.ts') ? 'video/mp2t' : 
-                        originalUrl.endsWith('.m3u8') ? 'application/vnd.apple.mpegurl' : 
-                        'application/octet-stream');
-
-    // �zellikle TS segmentleri i�in doru content-type
-    res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Length', buffer.length);
-    res.setHeader('Accept-Ranges', 'bytes');
-    res.setHeader('Cache-Control', 'no-cache');
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
-    res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range');
-
-    // Range isteklerini destekle
-    const range = req.headers.range;
-    if (range && contentType.includes('video')) {
-      const parts = range.replace(/bytes=/, "").split("-");
-      const start = parseInt(parts[0], 10);
-      const end = parts[1] ? parseInt(parts[1], 10) : buffer.length - 1;
-      const chunksize = (end - start) + 1;
-      
-      res.status(206);
-      res.setHeader('Content-Range', `bytes ${start}-${end}/${buffer.length}`);
-      res.setHeader('Content-Length', chunksize);
-      res.send(buffer.slice(start, end + 1));
-    } else {
-      res.send(buffer);
-    }
-  } catch (err) {
-    console.error('Seg hatas:', err.message, originalUrl);
-    res.status(500).send('Segment sikintisi: ' + err.message);
+    res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
+    res.setHeader('Cache-Control', 'no-cache, max-age=0');
+    res.status(200).send(body);
+  } catch (error) {
+    console.error('Playlist hatası:', error);
+    res.status(502).send('# Kaynak alınamadı\n');
   }
-});
+}
 
-module.exports = app;
+// Segment handler (logo ekleme)
+async function handleSegment(req, res, path) {
+  const filename = path.replace('/seg/', '');
+  const segmentUrl = `https://dga1op10s1u3leo.450bb93555fef8.click/live/selcukobs1/${filename}`;
+
+  try {
+    // Önce orijinal resmi al
+    const imageResponse = await fetch(segmentUrl);
+    
+    if (!imageResponse.ok) {
+      throw new Error(`Resim alınamadı: ${imageResponse.status}`);
+    }
+
+    const imageBuffer = await imageResponse.arrayBuffer();
+    const contentType = imageResponse.headers.get('content-type') || 'image/jpeg';
+
+    // Logo ekleme işlemi (Base64 ile)
+    const finalImage = await addLogoToImage(imageBuffer, contentType);
+
+    res.setHeader('Content-Type', contentType);
+    res.setHeader('Cache-Control', 'no-cache, max-age=300'); // 5 dakika cache
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.status(200).send(Buffer.from(finalImage));
+  } catch (error) {
+    console.error('Segment hatası:', error);
+    
+    // Hata durumunda orijinal resmi dene
+    try {
+      const fallbackResponse = await fetch(segmentUrl);
+      const fallbackBuffer = await fallbackResponse.arrayBuffer();
+      
+      res.setHeader('Content-Type', fallbackResponse.headers.get('content-type') || 'image/jpeg');
+      res.setHeader('Cache-Control', 'no-cache');
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      res.status(200).send(Buffer.from(fallbackBuffer));
+    } catch {
+      res.status(502).send('Resim alınamadı');
+    }
+  }
+}
+
+// Logoyu resme ekle (Sharp kütüphanesi ile)
+async function addLogoToImage(imageBuffer, contentType) {
+  try {
+    // Dinamik import ile sharp'ı yükle
+    const sharp = (await import('sharp')).default;
+    
+    // Logoyu dene (birden fazla URL dene)
+    let logoBuffer = null;
+    
+    for (const logoUrl of LOGO_URLS) {
+      try {
+        const logoResponse = await fetch(logoUrl);
+        if (logoResponse.ok) {
+          logoBuffer = await logoResponse.arrayBuffer();
+          break;
+        }
+      } catch (e) {
+        console.log(`Logo alınamadı: ${logoUrl}`);
+      }
+    }
+
+    if (!logoBuffer) {
+      console.log('Logo alınamadı, orijinal resim döndürülüyor');
+      return imageBuffer;
+    }
+
+    // Resmi işle
+    const processedImage = await sharp(imageBuffer)
+      .composite([
+        {
+          input: Buffer.from(logoBuffer),
+          gravity: 'northeast', // Sağ üst köşe
+          blend: 'over',
+          top: 10,
+          left: null, // Sağa yaslamak için left'i null yap
+        }
+      ])
+      .toBuffer();
+
+    return processedImage;
+  } catch (error) {
+    console.error('Logo ekleme hatası:', error);
+    return imageBuffer; // Hata durumunda orijinal resim
+  }
+}
+
+// Logo test endpoint
+async function testLogo(req, res) {
+  try {
+    const sharp = (await import('sharp')).default;
+    
+    // Test resmi oluştur
+    const testImage = await sharp({
+      create: {
+        width: 640,
+        height: 360,
+        channels: 3,
+        background: { r: 0, g: 0, b: 0 }
+      }
+    })
+    .composite([
+      {
+        input: Buffer.from(await (await fetch(LOGO_URLS[0])).arrayBuffer()),
+        gravity: 'northeast',
+        top: 10,
+        left: null,
+      }
+    ])
+    .png()
+    .toBuffer();
+
+    res.setHeader('Content-Type', 'image/png');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.status(200).send(testImage);
+  } catch (error) {
+    res.status(500).send(`Logo test başarısız: ${error.message}`);
+  }
+}
+
+// package.json için gerekli bağımlılıklar
+/*
+{
+  "name": "m3u8-proxy",
+  "version": "1.0.0",
+  "dependencies": {
+    "sharp": "^0.33.0"
+  }
+}
+*/
+
+// vercel.json
+/*
+{
+  "functions": {
+    "api/proxy.js": {
+      "memory": 1024,
+      "maxDuration": 10
+    }
+  }
+}
+*/
